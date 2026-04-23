@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aurora Battle - Ultimate Edition</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --primary: #00f2fe;
+    --secondary: #ff00c1;
+    --bg: #050510;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: 'Rajdhani', sans-serif;
+}
+
+body{
+    text-align:center;
+    background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+    color:white;
+    min-height:100vh;
+    padding:20px;
+    overflow:hidden;
+}
+
+.challenge-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    color: var(--secondary);
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+h1{
+    margin-bottom:10px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 2.5rem;
+    background: linear-gradient(to right, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.5));
+    text-transform: uppercase;
+}
+
+#status {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: var(--primary);
+    letter-spacing: 2px;
+    height: 1.5rem;
+    white-space: pre; /* Keeps spaces intact during typing */
+}
+
+.board{
+    display:grid;
+    grid-template-columns:repeat(3, 100px);
+    gap:12px;
+    justify-content:center;
+    margin:20px auto;
+    perspective: 1000px;
+}
+
+.cell{
+    width:100px;
+    height:100px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 2.8rem;
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s all cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 15px rgba(255,255,255,0.05);
+}
+
+.cell:hover{
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateZ(20px);
+    border-color: var(--primary);
+}
+
+.cell.x-move { color: var(--primary); text-shadow: 0 0 15px var(--primary); }
+.cell.o-move { color: var(--secondary); text-shadow: 0 0 15px var(--secondary); }
+
+.winner {
+    background: rgba(0, 242, 254, 0.2) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 30px var(--primary);
+    transform: scale(1.05);
+}
+
+.btn-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+button {
+    padding:12px 35px;
+    border:none;
+    color:white;
+    border-radius:50px;
+    cursor:pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: 0.3s;
+}
+
+.restart-btn {
+    background: linear-gradient(45deg, #ff00c1, #ff4b2b);
+    box-shadow: 0 0 20px rgba(255, 0, 193, 0.4);
+}
+
+.about-btn {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 30px var(--primary);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: rgba(15, 15, 30, 0.95);
+    margin: 15% auto;
+    padding: 30px;
+    border: 1px solid var(--primary);
+    width: 320px;
+    border-radius: 20px;
+    box-shadow: 0 0 40px var(--primary);
+    animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+    from {transform: translateY(-50px); opacity: 0;}
+    to {transform: translateY(0); opacity: 1;}
+}
+
+.modal-content h2 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--primary);
+    margin-bottom: 15px;
+}
+
+.modal-content p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+}
+
+.close-btn {
+    color: var(--secondary);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+canvas#fireworks {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+</style>
+</head>
+<body>
+
+<div class="challenge-text">If you win the game, I will accept you as the boss !</div>
+
+<h1>✨ AURORA BATTLE ✨</h1>
+<div id="status">READY FOR MISSION</div>
+
+<div class="board" id="board">
+    <div class="cell" data-i="0"></div>
+    <div class="cell" data-i="1"></div>
+    <div class="cell" data-i="2"></div>
+    <div class="cell" data-i="3"></div>
+    <div class="cell" data-i="4"></div>
+    <div class="cell" data-i="5"></div>
+    <div class="cell" data-i="6"></div>
+    <div class="cell" data-i="7"></div>
+    <div class="cell" data-i="8"></div>
+</div>
+
+<div class="btn-container">
+    <button class="restart-btn" onclick="handleRestart()">RESTART BATTLE</button>
+    <button class="about-btn" onclick="handleAbout()">ABOUT GAME DEVELOPER</button>
+</div>
+
+<div id="aboutModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeAbout()">&times;</span>
+    <h2>DEVELOPER INFO</h2>
+    <p><strong>Name:</strong> Fahim</p>
+    <p><strong>Class:</strong> 9 (Science)</p>
+    <p><strong>Location:</strong> Faridabad, Old Dhaka</p>
+    <p><strong>Board:</strong> Dhaka</p>
+    <p style="margin-top:10px; font-size: 0.9rem; color: var(--secondary);">SSC Candidate 2028</p>
+  </div>
+</div>
+
+<canvas id="fireworks"></canvas>
+
+<script>
+const cells = document.querySelectorAll(".cell");
+const statusText = document.getElementById("status");
+const canvas = document.getElementById("fireworks");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let board = Array(9).fill("");
+let turn = "X";
+let active = true;
+let typeInterval;
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function typeStatus(text) {
+    clearInterval(typeInterval);
+    statusText.innerText = "";
+    let i = 0;
+    typeInterval = setInterval(() => {
+        if (i < text.length) {
+            statusText.innerText += text[i];
+            i++;
+        } else {
+            clearInterval(typeInterval);
+        }
+    }, 40); // Standard typing speed
+}
+
+function playSound(freq, type, duration, vol) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+}
+
+function clickSound() { playSound(440, 'triangle', 0.2, 0.3); }
+function btnSound() { playSound(600, 'square', 0.15, 0.2); }
+function winSound() { 
+    playSound(523.25, 'sine', 0.5, 0.3);
+    setTimeout(() => playSound(659.25, 'sine', 0.5, 0.3), 150);
+    setTimeout(() => playSound(783.99, 'sine', 0.8, 0.3), 300);
+}
+function aiWinSound() {
+    playSound(200, 'sawtooth', 0.4, 0.2);
+    setTimeout(() => playSound(150, 'sawtooth', 0.6, 0.2), 200);
+}
+function drawSound() {
+    playSound(300, 'sine', 0.3, 0.2);
+    setTimeout(() => playSound(300, 'sine', 0.3, 0.2), 150);
+}
+
+let particles = [];
+function createFirework() {
+    for(let i=0; i<100; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: canvas.height,
+            vx: Math.random() * 6 - 3,
+            vy: Math.random() * -15 - 10,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+            life: 100
+        });
+    }
+}
+
+function animate() {
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.2; 
+        p.life--;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+        ctx.fill();
+        if(p.life <= 0) particles.splice(i, 1);
+    });
+    requestAnimationFrame(animate);
+}
+animate();
+
+function aiMove() {
+    if(!active) return;
+    let bestScore = -Infinity;
+    let move;
+    for(let i=0; i<9; i++){
+        if(board[i] === ""){
+            board[i] = "O";
+            let score = minimax(board, 0, false);
+            board[i] = "";
+            if(score > bestScore){
+                bestScore = score;
+                move = i;
+            }
+        }
+    }
+    executeMove(move, "O");
+}
+
+const scores = { O: 10, X: -10, tie: 0 };
+
+function minimax(board, depth, isMaximizing) {
+    let result = checkWinner(board);
+    if (result !== null) return scores[result];
+
+    if (isMaximizing) {
+        let bestScore = -Infinity;
+        for(let i=0; i<9; i++){
+            if(board[i] === ""){
+                board[i] = "O";
+                let score = minimax(board, depth + 1, false);
+                board[i] = "";
+                bestScore = Math.max(score, bestScore);
+            }
+        }
+        return bestScore;
+    } else {
+        let bestScore = Infinity;
+        for(let i=0; i<9; i++){
+            if(board[i] === ""){
+                board[i] = "X";
+                let score = minimax(board, depth + 1, true);
+                board[i] = "";
+                bestScore = Math.min(score, bestScore);
+            }
+        }
+        return bestScore;
+    }
+}
+
+function executeMove(i, p) {
+    setTimeout(() => {
+        if(i !== undefined && active) {
+            board[i] = p;
+            cells[i].textContent = p;
+            cells[i].classList.add(p === "X" ? "x-move" : "o-move");
+            if(!checkWin()) {
+                turn = "X";
+                typeStatus("YOUR TURN");
+            }
+        }
+    }, 600);
+}
+
+function checkWinner(b) {
+    const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (let p of winPatterns) {
+        if (b[p[0]] && b[p[0]] === b[p[1]] && b[p[0]] === b[p[2]]) return b[p[0]];
+    }
+    return b.includes("") ? null : "tie";
+}
+
+cells.forEach(c => {
+    c.onclick = () => {
+        let i = c.dataset.i;
+        if(board[i] || turn !== "X" || !active) return;
+        
+        clickSound();
+        board[i] = "X";
+        c.textContent = "X";
+        c.classList.add("x-move");
+        
+        if(!checkWin()) {
+            turn = "O";
+            typeStatus("AI THINKING...");
+            aiMove();
+        }
+    };
+});
+
+function checkWin() {
+    let res = checkWinner(board);
+    if(res) {
+        active = false;
+        createFirework(); 
+        
+        if(res === "tie") {
+            typeStatus("BATTLE DRAW!");
+            drawSound();
+        } else if (res === "O") {
+            typeStatus("Bot won not you😂");
+            aiWinSound();
+            highlightWin();
+        } else {
+            typeStatus(res + " WINS THE BATTLE!");
+            winSound();
+            highlightWin();
+        }
+        return true;
+    }
+    return false;
+}
+
+function highlightWin() {
+    const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (let p of winPatterns) {
+        if (board[p[0]] && board[p[0]] === board[p[1]] && board[p[0]] === board[p[2]]) {
+            p.forEach(idx => cells[idx].classList.add("winner"));
+        }
+    }
+}
+
+function handleRestart() {
+    btnSound();
+    restart();
+}
+
+function handleAbout() {
+    btnSound();
+    openAbout();
+}
+
+function restart() {
+    board = Array(9).fill("");
+    turn = "X";
+    active = true;
+    typeStatus("YOUR TURN");
+    cells.forEach(c => {
+        c.textContent = "";
+        c.className = "cell";
+    });
+    particles = [];
+}
+
+function openAbout() { document.getElementById("aboutModal").style.display = "block"; }
+function closeAbout() { document.getElementById("aboutModal").style.display = "none"; }
+window.onclick = function(event) {
+    if (event.target == document.getElementById("aboutModal")) closeAbout();
+}
+</script>
+</body>
+</html>
